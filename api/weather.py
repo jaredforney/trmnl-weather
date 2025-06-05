@@ -13,7 +13,7 @@ class handler(BaseHTTPRequestHandler):
         
         try:
             # Get current weather + 3-day forecast with hourly data
-            forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={LOCATION}&days=3&aqi=no&alerts=no"
+            forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={LOCATION}&days=7&aqi=no&alerts=no"
             with urllib.request.urlopen(forecast_url) as response:
                 forecast_data = json.loads(response.read())
             
