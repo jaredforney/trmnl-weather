@@ -58,14 +58,16 @@ class handler(BaseHTTPRequestHandler):
                     "chance": day["day"].get("daily_chance_of_rain", 0)
                 })
             
-            # Add today's hourly forecast (next 12 hours)
+            # Add today's hourly forecast (next 12 hours, including tomorrow if needed)
             today_forecast = forecast_days[0]
+            tomorrow_forecast = forecast_days[1] if len(forecast_days) > 1 else None
             current_hour = datetime.now().hour
             
+            # Get all remaining hours from today
             for hour_data in today_forecast["hour"]:
                 hour_time = datetime.strptime(hour_data["time"], "%Y-%m-%d %H:%M")
                 
-                # Only include current hour and next 11 hours
+                # Include current hour and future hours from today
                 if hour_time.hour >= current_hour:
                     hourly_item = {
                         "time": hour_time.strftime("%I %p").lstrip("0"),  # "2 PM"
@@ -75,10 +77,27 @@ class handler(BaseHTTPRequestHandler):
                         "wind_mph": int(hour_data.get("wind_mph", 0))
                     }
                     weather_data["hourly_today"].append(hourly_item)
-                    
-                    # Limit to 12 hours
-                    if len(weather_data["hourly_today"]) >= 12:
+            
+            # If we need more hours to reach 12, add from tomorrow
+            if len(weather_data["hourly_today"]) < 12 and tomorrow_forecast:
+                hours_needed = 12 - len(weather_data["hourly_today"])
+                
+                for i, hour_data in enumerate(tomorrow_forecast["hour"]):
+                    if i >= hours_needed:
                         break
+                        
+                    hour_time = datetime.strptime(hour_data["time"], "%Y-%m-%d %H:%M")
+                    hourly_item = {
+                        "time": hour_time.strftime("%I %p").lstrip("0"),
+                        "temp_f": int(hour_data["temp_f"]),
+                        "condition": hour_data["condition"]["text"],
+                        "chance_of_rain": hour_data.get("chance_of_rain", 0),
+                        "wind_mph": int(hour_data.get("wind_mph", 0))
+                    }
+                    weather_data["hourly_today"].append(hourly_item)
+            
+            # Limit to exactly 12 hours
+            weather_data["hourly_today"] = weather_data["hourly_today"][:12]
             
             # Send response
             self.send_response(200)
