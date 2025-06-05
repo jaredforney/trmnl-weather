@@ -3,6 +3,7 @@ import json
 import urllib.request
 import urllib.parse
 import os
+from datetime import datetime
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -11,39 +12,73 @@ class handler(BaseHTTPRequestHandler):
         LOCATION = os.environ.get('LOCATION', 'Berkeley,CA')
         
         try:
-            # Get current weather
-            current_url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={LOCATION}"
-            with urllib.request.urlopen(current_url) as response:
-                current_data = json.loads(response.read())
-            
-            # Get 3-day forecast
-            forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={LOCATION}&days=3"
+            # Get current weather + 3-day forecast with hourly data
+            forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={LOCATION}&days=3&aqi=no&alerts=no"
             with urllib.request.urlopen(forecast_url) as response:
                 forecast_data = json.loads(response.read())
             
+            current_data = forecast_data["current"]
+            location_data = forecast_data["location"]
+            forecast_days = forecast_data["forecast"]["forecastday"]
+            
             # Format the data for TRMNL
             weather_data = {
-                "location": current_data["location"]["name"],
-                "region": current_data["location"]["region"],
+                "location": location_data["name"],
+                "region": location_data["region"],
                 "current": {
-                    "temp_f": int(current_data["current"]["temp_f"]),
-                    "temp_c": int(current_data["current"]["temp_c"]),
-                    "condition": current_data["current"]["condition"]["text"],
-                    "humidity": current_data["current"]["humidity"],
-                    "wind_mph": int(current_data["current"]["wind_mph"]),
-                    "feels_like_f": int(current_data["current"]["feelslike_f"])
+                    "temp_f": int(current_data["temp_f"]),
+                    "temp_c": int(current_data["temp_c"]),
+                    "condition": current_data["condition"]["text"],
+                    "humidity": current_data["humidity"],
+                    "wind_mph": int(current_data["wind_mph"]),
+                    "feels_like_f": int(current_data["feelslike_f"]),
+                    "uv": current_data.get("uv", 0)
                 },
-                "forecast": []
+                "forecast": [],
+                "hourly_today": [],
+                "rain_chances": []
             }
             
-            # Add forecast days
-            for day in forecast_data["forecast"]["forecastday"]:
-                weather_data["forecast"].append({
+            # Add daily forecast with rain chances
+            for day in forecast_days:
+                day_data = {
                     "date": day["date"],
                     "high_f": int(day["day"]["maxtemp_f"]),
                     "low_f": int(day["day"]["mintemp_f"]),
-                    "condition": day["day"]["condition"]["text"]
+                    "condition": day["day"]["condition"]["text"],
+                    "chance_of_rain": day["day"].get("daily_chance_of_rain", 0),
+                    "max_wind_mph": int(day["day"].get("maxwind_mph", 0)),
+                    "avg_humidity": int(day["day"].get("avghumidity", 0))
+                }
+                weather_data["forecast"].append(day_data)
+                
+                # Separate rain chances for easy access
+                weather_data["rain_chances"].append({
+                    "date": day["date"],
+                    "chance": day["day"].get("daily_chance_of_rain", 0)
                 })
+            
+            # Add today's hourly forecast (next 12 hours)
+            today_forecast = forecast_days[0]
+            current_hour = datetime.now().hour
+            
+            for hour_data in today_forecast["hour"]:
+                hour_time = datetime.strptime(hour_data["time"], "%Y-%m-%d %H:%M")
+                
+                # Only include current hour and next 11 hours
+                if hour_time.hour >= current_hour:
+                    hourly_item = {
+                        "time": hour_time.strftime("%I %p").lstrip("0"),  # "2 PM"
+                        "temp_f": int(hour_data["temp_f"]),
+                        "condition": hour_data["condition"]["text"],
+                        "chance_of_rain": hour_data.get("chance_of_rain", 0),
+                        "wind_mph": int(hour_data.get("wind_mph", 0))
+                    }
+                    weather_data["hourly_today"].append(hourly_item)
+                    
+                    # Limit to 12 hours
+                    if len(weather_data["hourly_today"]) >= 12:
+                        break
             
             # Send response
             self.send_response(200)
