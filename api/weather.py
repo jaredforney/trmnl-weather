@@ -9,7 +9,7 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Your WeatherAPI key - you'll set this in Vercel
         WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'PUT_YOUR_KEY_HERE')
-        LOCATION = os.environ.get('LOCATION', 'Berkeley,CA')
+        LOCATION = os.environ.get('LOCATION', '37.8715,-122.2730')
         
         try:
             # Get current weather + 7-day forecast with hourly data
