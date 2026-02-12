@@ -1,0 +1,78 @@
+<div class="layout layout--col gap--space-between">
+  <!-- Current Conditions -->
+  <div class="grid">
+    <div class="col col--span-3 col--end">
+      <div class="item h--full">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--xxxlarge" data-value-fit="true">{{ current.temp_f }}°</span>
+          <span class="label">{{ current.condition }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="col col--span-6 col--end gap--medium">
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--small">{{ current.feels_like_f }}°</span>
+          <span class="label">Feels Like</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--small">{{ current.humidity }}%</span>
+          <span class="label">Humidity</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--small">{{ current.wind_mph }} mph</span>
+          <span class="label">Wind</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full b-h-gray-5"></div>
+
+  <!-- Hourly Forecast -->
+  <div class="grid grid--cols-6">
+    {% for hour in hourly %}
+    <div class="col col--center">
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--small">{{ hour.temp_f }}°</span>
+          <span class="label">{{ hour.time }}</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="w-full b-h-gray-5"></div>
+
+  <!-- 3-Day Forecast -->
+  <div class="grid grid--cols-3">
+    {% for day in forecast %}
+    <div class="col col--center">
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="label label--underline">{{ day.day }}</span>
+          <span class="value value--small">{{ day.high_f }}° / {{ day.low_f }}°</span>
+          <span class="label label--small">{{ day.condition }}</span>
+          <span class="label label--small">{{ day.rain }}% rain</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="title_bar">
+  <span class="title">Weather</span>
+  <span class="instance">{{ location }}, {{ region }}</span>
+</div>
