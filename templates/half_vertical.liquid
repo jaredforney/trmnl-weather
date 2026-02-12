@@ -1,28 +1,287 @@
-<div class="layout layout--col gap--space-between">
-  <div class="item">
-    <div class="meta"></div>
-    <div class="content">
-      <span class="value value--xxxlarge" data-value-fit="true">{{ current.temp_f }}°</span>
-      <span class="label">{{ current.condition }}</span>
-    </div>
-  </div>
+<!-- Weather icons for condition display -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
 
-  <div class="w-full b-h-gray-5"></div>
+<!-- Compute temperature marker position (replaces JavaScript) -->
+{% assign temp_range = forecast[0].high_f | minus: forecast[0].low_f %}
+{% assign temp_offset = current.temp_f | minus: forecast[0].low_f %}
+{% if temp_range > 0 %}
+  {% assign marker_pct = temp_offset | times: 100 | divided_by: temp_range %}
+{% else %}
+  {% assign marker_pct = 50 %}
+{% endif %}
+{% if marker_pct < 0 %}{% assign marker_pct = 0 %}{% endif %}
+{% if marker_pct > 100 %}{% assign marker_pct = 100 %}{% endif %}
 
-  <div class="flex flex--col gap--small">
-    {% for day in forecast %}
-    <div class="item">
-      <div class="meta"></div>
-      <div class="content">
-        <span class="value value--small">{{ day.high_f }}° / {{ day.low_f }}°</span>
-        <span class="label">{{ day.day }} &mdash; {{ day.condition }}</span>
-      </div>
+<style>
+    .weather-container {
+        padding: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .current-section {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .divider {
+        border: none;
+        border-top: 2px dotted #000;
+        height: 0;
+        width: 100%;
+        margin: 8px 0;
+    }
+
+    .forecast-section {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .location-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #000;
+        text-align: center;
+    }
+
+    .current-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .weather-temp-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .weather-icon {
+        font-size: 44px;
+        line-height: 1;
+        color: #000;
+        flex-shrink: 0;
+    }
+
+    .temperature {
+        font-size: 56px;
+        font-weight: 300;
+        line-height: 1;
+        color: #000;
+        flex-shrink: 0;
+        text-align: center;
+    }
+
+    .temp-range {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 8px;
+        font-size: 16px;
+        color: #000;
+    }
+
+    .temp-bar {
+        flex: 1;
+        height: 5px;
+        background: repeating-linear-gradient(
+            90deg,
+            #000 0px,
+            #000 1px,
+            transparent 1px,
+            transparent 5px
+        );
+        position: relative;
+        min-width: 100px;
+    }
+
+    .current-marker {
+        position: absolute;
+        top: -2px;
+        height: 9px;
+        width: 3px;
+        background: #000;
+    }
+
+    .current-condition {
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #000;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 6px 28px;
+        font-size: 12px;
+        color: #000;
+        justify-content: center;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .detail-label {
+        font-weight: 400;
+        font-size: 10px;
+    }
+
+    .detail-value {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .forecast-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #000;
+    }
+
+    .forecast-table {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        flex: 1;
+    }
+
+    .forecast-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1.5fr;
+        gap: 18px;
+        font-size: 13px;
+        color: #000;
+        margin-bottom: 8px;
+        align-items: center;
+        padding: 4px 0;
+    }
+
+    .forecast-day {
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .forecast-icon {
+        font-size: 20px;
+        text-align: center;
+    }
+
+    .forecast-rain {
+        font-weight: 400;
+        text-align: center;
+    }
+
+    .forecast-temps {
+        font-weight: 400;
+        text-align: right;
+    }
+</style>
+
+<div class="layout">
+    <div class="weather-container">
+        <!-- Current Weather & Details Section -->
+        <div class="current-section">
+            <div>
+                <div class="location-name">{{ location }}, {{ region }}</div>
+
+                <div class="current-main">
+                    <div class="weather-temp-group">
+                        <div class="weather-icon">
+                            <i class="wi
+                                {% if current.condition contains 'Sunny' or current.condition contains 'Clear' %}wi-day-sunny
+                                {% elsif current.condition contains 'Partly' and current.condition contains 'cloud' %}wi-day-cloudy
+                                {% elsif current.condition contains 'Cloudy' or current.condition contains 'Overcast' %}wi-cloudy
+                                {% elsif current.condition contains 'Rain' or current.condition contains 'Drizzle' %}wi-rain
+                                {% elsif current.condition contains 'Thunder' %}wi-thunderstorm
+                                {% elsif current.condition contains 'Snow' %}wi-snow
+                                {% elsif current.condition contains 'Mist' or current.condition contains 'Fog' %}wi-fog
+                                {% else %}wi-day-cloudy
+                                {% endif %}"></i>
+                        </div>
+                        <div class="temperature">{{ current.temp_f }}°</div>
+                    </div>
+                </div>
+
+                <div class="temp-range">
+                    <span>{{ forecast[0].low_f }}°</span>
+                    <div class="temp-bar">
+                        <div class="current-marker" style="left: {{ marker_pct }}%"></div>
+                    </div>
+                    <span>{{ forecast[0].high_f }}°</span>
+                </div>
+            </div>
+
+            <div class="current-condition">
+                {{ current.condition }}
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Feels like</span>
+                    <span class="detail-value">{{ current.feels_like_f }}°</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Rain</span>
+                    <span class="detail-value">{{ forecast[0].rain }}%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">UV Index</span>
+                    <span class="detail-value">{{ current.uv }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Wind</span>
+                    <span class="detail-value">{{ current.wind_mph }} mph</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- 3-Day Forecast Section -->
+        <div class="forecast-section">
+            <div class="forecast-title">3-Day Forecast</div>
+            <div class="forecast-table">
+                {% for day in forecast limit:3 %}
+                <div class="forecast-row">
+                    <div class="forecast-day">
+                        {{ day.day }} <span style="font-weight: 400; font-size: 10px;">{{ day.date | date: "%-m/%-d" }}</span>
+                    </div>
+                    <div class="forecast-icon">
+                        <i class="wi
+                            {% if day.condition contains 'Sunny' or day.condition contains 'Clear' %}wi-day-sunny
+                            {% elsif day.condition contains 'Partly' and day.condition contains 'cloud' %}wi-day-cloudy
+                            {% elsif day.condition contains 'Cloudy' or day.condition contains 'Overcast' %}wi-cloudy
+                            {% elsif day.condition contains 'Rain' or day.condition contains 'Drizzle' %}wi-rain
+                            {% elsif day.condition contains 'Thunder' %}wi-thunderstorm
+                            {% elsif day.condition contains 'Snow' %}wi-snow
+                            {% elsif day.condition contains 'Mist' or day.condition contains 'Fog' %}wi-fog
+                            {% else %}wi-day-cloudy
+                            {% endif %}"></i>
+                    </div>
+                    <div class="forecast-rain">{{ day.rain }}%</div>
+                    <div class="forecast-temps">{{ day.low_f }}°/{{ day.high_f }}°</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    {% endfor %}
-  </div>
 </div>
 
 <div class="title_bar">
-  <span class="title">Weather</span>
-  <span class="instance">{{ location }}</span>
+    <span class="title">Weather</span>
+    <span class="instance">{{ location }}, {{ region }}</span>
 </div>

@@ -52,6 +52,7 @@ class handler(BaseHTTPRequestHandler):
             for i, day in enumerate(forecast_days):
                 weather_data["forecast"].append({
                     "day": get_day_label(day["date"], i),
+                    "date": day["date"],
                     "high_f": int(day["day"]["maxtemp_f"]),
                     "low_f": int(day["day"]["mintemp_f"]),
                     "condition": day["day"]["condition"]["text"],
