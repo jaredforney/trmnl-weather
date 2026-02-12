@@ -1,0 +1,33 @@
+<div class="layout layout--col gap--space-between">
+  <div class="grid">
+    <div class="col col--span-3">
+      <div class="item h--full">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="value value--xlarge" data-value-fit="true">{{ current.temp_f }}°</span>
+          <span class="label">{{ current.condition }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="col col--span-6">
+      <div class="grid grid--cols-3">
+        {% for day in forecast %}
+        <div class="col col--center">
+          <div class="item">
+            <div class="meta"></div>
+            <div class="content">
+              <span class="value value--small">{{ day.high_f }}°/{{ day.low_f }}°</span>
+              <span class="label">{{ day.day }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="title_bar">
+  <span class="title">Weather</span>
+  <span class="instance">{{ location }}, {{ region }}</span>
+</div>
