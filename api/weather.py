@@ -13,6 +13,26 @@ def get_day_label(date_str, index):
     return dt.strftime("%a")
 
 
+def get_icon_name(condition):
+    """Map a weather condition string to an icon identifier."""
+    c = condition.lower()
+    if 'thunder' in c:
+        return 'thunder'
+    if 'snow' in c or 'sleet' in c or 'ice' in c or 'blizzard' in c:
+        return 'snow'
+    if 'rain' in c or 'drizzle' in c or 'shower' in c:
+        return 'rain'
+    if 'sunny' in c or 'clear' in c:
+        return 'sun'
+    if 'partly' in c:
+        return 'partly_cloudy'
+    if 'mist' in c or 'fog' in c:
+        return 'fog'
+    if 'cloudy' in c or 'overcast' in c:
+        return 'cloud'
+    return 'cloud'
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'PUT_YOUR_KEY_HERE')
@@ -39,6 +59,7 @@ class handler(BaseHTTPRequestHandler):
                     "temp_f": int(current_data["temp_f"]),
                     "temp_c": int(current_data["temp_c"]),
                     "condition": current_data["condition"]["text"],
+                    "icon": get_icon_name(current_data["condition"]["text"]),
                     "humidity": current_data["humidity"],
                     "wind_mph": int(current_data["wind_mph"]),
                     "feels_like_f": int(current_data["feelslike_f"]),
@@ -56,6 +77,7 @@ class handler(BaseHTTPRequestHandler):
                     "high_f": int(day["day"]["maxtemp_f"]),
                     "low_f": int(day["day"]["mintemp_f"]),
                     "condition": day["day"]["condition"]["text"],
+                    "icon": get_icon_name(day["day"]["condition"]["text"]),
                     "rain": day["day"].get("daily_chance_of_rain", 0)
                 })
 
@@ -71,6 +93,7 @@ class handler(BaseHTTPRequestHandler):
                         "time": hour_time.strftime("%I %p").lstrip("0"),
                         "temp_f": int(hour_data["temp_f"]),
                         "condition": hour_data["condition"]["text"],
+                        "icon": get_icon_name(hour_data["condition"]["text"]),
                         "rain": hour_data.get("chance_of_rain", 0)
                     })
 
@@ -85,6 +108,7 @@ class handler(BaseHTTPRequestHandler):
                         "time": hour_time.strftime("%I %p").lstrip("0"),
                         "temp_f": int(hour_data["temp_f"]),
                         "condition": hour_data["condition"]["text"],
+                        "icon": get_icon_name(hour_data["condition"]["text"]),
                         "rain": hour_data.get("chance_of_rain", 0)
                     })
 
