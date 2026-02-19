@@ -1,15 +1,30 @@
-<div class="layout layout--col layout--center gap--small">
+<div class="layout layout--col gap">
+
   <div class="item">
     <div class="meta"></div>
     <div class="content">
-      <span class="value value--xlarge" data-value-fit="true">{{ current.temp_f }}°</span>
-      <span class="label">{{ current.condition }}</span>
+      <span class="value value--large">{{ current.temp_f }}°</span>
+      <span class="label">{{ location }} &middot; {{ current.condition }}</span>
     </div>
   </div>
-  <span class="label label--small">H: {{ forecast[0].high_f }}° L: {{ forecast[0].low_f }}°</span>
-</div>
 
+  <div class="divider"></div>
+
+  {% for day in forecast %}
+  <div class="item">
+    <div class="meta">
+      <span class="label label--gray">{{ day.day }}</span>
+    </div>
+    <div class="content">
+      <span class="value value--small">{{ day.high_f }}° / {{ day.low_f }}°</span>
+      <span class="label">{{ day.rain }}% rain</span>
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
 <div class="title_bar">
+  <img class="image" src="https://trmnl.com/images/plugins/weather--render.svg" />
   <span class="title">Weather</span>
   <span class="instance">{{ location }}</span>
 </div>
