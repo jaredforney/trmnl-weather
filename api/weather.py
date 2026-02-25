@@ -13,6 +13,12 @@ def get_day_label(date_str, index):
     return dt.strftime("%a")
 
 
+def get_date_label(date_str):
+    """Convert a YYYY-MM-DD date string to MM/DD format."""
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    return "{}/{}".format(dt.month, dt.day)
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'PUT_YOUR_KEY_HERE')
@@ -31,7 +37,6 @@ class handler(BaseHTTPRequestHandler):
             location_data = forecast_data["location"]
             forecast_days = forecast_data["forecast"]["forecastday"]
 
-            # Format data for TRMNL (compact to stay within 2KB polling limit)
             weather_data = {
                 "location": location_data["name"],
                 "region": location_data["region"],
@@ -48,10 +53,12 @@ class handler(BaseHTTPRequestHandler):
                 "hourly": []
             }
 
-            # Add 3-day forecast
+            # Add all 4 days (index 0 = Today, 1-3 = next 3 days)
+            # Templates skip index 0 to show only upcoming days
             for i, day in enumerate(forecast_days):
                 weather_data["forecast"].append({
                     "day": get_day_label(day["date"], i),
+                    "date": get_date_label(day["date"]),
                     "high_f": int(day["day"]["maxtemp_f"]),
                     "low_f": int(day["day"]["mintemp_f"]),
                     "condition": day["day"]["condition"]["text"],
@@ -73,7 +80,6 @@ class handler(BaseHTTPRequestHandler):
                         "rain": hour_data.get("chance_of_rain", 0)
                     })
 
-            # Fill from tomorrow if needed to reach 6 hours
             if len(weather_data["hourly"]) < 6 and tomorrow_forecast:
                 hours_needed = 6 - len(weather_data["hourly"])
                 for i, hour_data in enumerate(tomorrow_forecast["hour"]):
@@ -89,7 +95,6 @@ class handler(BaseHTTPRequestHandler):
 
             weather_data["hourly"] = weather_data["hourly"][:6]
 
-            # Send response
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -100,5 +105,4 @@ class handler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            error_response = {"error": str(e)}
-            self.wfile.write(json.dumps(error_response).encode())
+            self.wfile.write(json.dumps({"error": str(e)}).encode())
