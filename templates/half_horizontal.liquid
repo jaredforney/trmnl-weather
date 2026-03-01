@@ -1,33 +1,43 @@
-<div class="layout layout--col gap--space-between">
-  <div class="grid">
-    <div class="col col--span-3">
-      <div class="item h--full">
+<div class="layout">
+  <div class="columns">
+
+    <!-- Left: current conditions -->
+    <div class="column">
+      <div class="item">
         <div class="meta"></div>
         <div class="content">
-          <span class="value value--xlarge" data-value-fit="true">{{ current.temp_f }}°</span>
-          <span class="label">{{ current.condition }}</span>
+          <span class="value value--xlarge">{{ current.temp_f }}°</span>
+          <span class="label">{{ location }}</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="meta"></div>
+        <div class="content">
+          <span class="title title--small">{{ current.condition }}</span>
+          <span class="label">Feels {{ current.feels_like_f }}° &middot; {{ current.humidity }}% humidity</span>
         </div>
       </div>
     </div>
-    <div class="col col--span-6">
-      <div class="grid grid--cols-3">
-        {% for day in forecast %}
-        <div class="col col--center">
-          <div class="item">
-            <div class="meta"></div>
-            <div class="content">
-              <span class="value value--small">{{ day.high_f }}°/{{ day.low_f }}°</span>
-              <span class="label">{{ day.day }}</span>
-            </div>
-          </div>
+
+    <!-- Right: 3-day forecast -->
+    <div class="column">
+      {% for day in forecast %}
+      <div class="item">
+        <div class="meta">
+          <span class="label label--gray">{{ day.day }}</span>
         </div>
-        {% endfor %}
+        <div class="content">
+          <span class="value value--small">{{ day.high_f }}° / {{ day.low_f }}°</span>
+          <span class="label">{{ day.rain }}% rain</span>
+        </div>
       </div>
+      {% endfor %}
     </div>
+
   </div>
 </div>
-
 <div class="title_bar">
+  <img class="image" src="https://trmnl.com/images/plugins/weather--render.svg" />
   <span class="title">Weather</span>
-  <span class="instance">{{ location }}, {{ region }}</span>
+  <span class="instance">{{ location }}</span>
 </div>
